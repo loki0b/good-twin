@@ -1,0 +1,31 @@
+{
+  "name": "good-twin",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "package": "electron-packager . good-twin --platform=linux --arch=x64 --out=./bin/good-twin --overwrite"
+  },
+  "author": "loki0b",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.17.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "electron": "^42.4.0",
+    "electron-packager": "^17.1.2",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3",
+    "vite-plugin-electron": "^1.0.4"
+  }
+}
