@@ -1,0 +1,9 @@
+{
+    "appId": "com.loki0b.good-twin",
+    "files": ["dist-electron", "dist-react"],
+    "extraResources": ["dist-electron/preload.cjs"],
+    "linux": {
+        "target": "AppImage",
+        "category": "Utility"
+    }
+}
