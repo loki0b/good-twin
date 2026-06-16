@@ -20,4 +20,18 @@ app.on("ready", () => {
   ipcMain.handle("writeRedLeds", (_, data) => {
     writeRedLeds(data);
   });
+
+  try {
+    initFPGA();
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+app.on("will-quit", () =>{
+  try {
+    closeFPGA();
+  } catch (err) {
+    console.log(err);
+  }
 });
