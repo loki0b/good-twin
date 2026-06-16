@@ -1,4 +1,4 @@
-import { greenLedsBus } from "../lib/fpgaApi.js"
+import { writeGreenLeds } from "../lib/fpgaApi.js"
 
 let data = 0x00000000
 
@@ -7,7 +7,7 @@ function Home() {
         if (data === 0x00000000) data = 0x0000000F;
         else data = 0x00000000;
 
-        await greenLedsBus(data);
+        await writeGreenLeds(data);
     }
 
     return (
