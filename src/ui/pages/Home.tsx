@@ -1,9 +1,13 @@
-import { useState } from "react";
 import { greenLedsBus } from "../lib/fpgaApi.js"
+
+let data = 0x00000000
 
 function Home() {
     const writeGreen = async () => {
-        await greenLedsBus(0x0000000F);
+        if (data === 0x00000000) data = 0x0000000F;
+        else data = 0x00000000;
+
+        await greenLedsBus(data);
     }
 
     return (
