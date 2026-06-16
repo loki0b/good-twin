@@ -1,4 +1,3 @@
-import { BrowserWindow } from "electron";
 import fs from "node:fs/promises";
 
 const FPGA_DEV        = "/dev/fpga";
@@ -23,18 +22,10 @@ async function initFPGA() {
     }
 }
 
-async function writeToBus(busAddress: number, data: number) {
-    try {
-        if (!FPGA_FD) throw new Error("FPGA not available");
-
-        const buffer = Buffer.alloc(BUFFER_SIZE);
-        buffer.writeUInt32LE(data, 0);
-
-        await FPGA_FD.write(buffer, 0, buffer.length, busAddress);
-        
-        console.log(`Write: 0x${data.toString(16)} to 0x${busAddress.toString(16)}`);
-    } catch (err) {
-        console.error(`Error: 0x${busAddress.toString(16)}: ${err}`);
+async function closeFPGA() {
+    if (FPGA_FD) {
+        await FPGA_FD.close();
+        FPGA_FD = null;
     }
 }
 
@@ -54,11 +45,51 @@ async function writeRedLeds(data: number) {
     }
 }
 
-async function closeFPGA() {
-    if (FPGA_FD) {
-        await FPGA_FD.close();
-        FPGA_FD = null;
+async function readSwitches() {
+    try {
+        return await readFromBus(SWITCH_BUS);
+    } catch (err) {
+        console.log(err);
     }
 }
 
-export { initFPGA, closeFPGA, writeGreenLeds, writeRedLeds }
+async function readPushButtons() {
+    try {
+       return await readFromBus(PUSH_BUTTON_BUS);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+async function writeToBus(busAddress: number, data: number) {
+    try {
+        if (!FPGA_FD) throw new Error("FPGA not available");
+
+        const buffer = Buffer.alloc(BUFFER_SIZE);
+        buffer.writeUInt32LE(data, 0);
+
+        await FPGA_FD.write(buffer, 0, buffer.length, busAddress);
+        
+        console.log(`Write: 0x${data.toString(16)} to 0x${busAddress.toString(16)}`);
+    } catch (err) {
+        console.error(`Error: 0x${busAddress.toString(16)}: ${err}`);
+    }
+}
+
+async function readFromBus(busAddress: number) {
+    try {
+        if (!FPGA_FD) throw new Error("FPGA not available");
+
+        const buffer = Buffer.alloc(BUFFER_SIZE);
+        await FPGA_FD.read(buffer, 0, BUFFER_SIZE, busAddress);
+
+        const data = buffer.readUInt32LE(0);
+        console.log(`Read: 0x${data.toString(16)} to 0x${busAddress.toString(16)}`);
+
+        return data;
+    } catch (err) {
+        console.error(`Error: 0x${busAddress.toString(16)}: ${err}`);
+    }
+}
+
+export { initFPGA, closeFPGA, writeGreenLeds, writeRedLeds, readPushButtons, readSwitches }
