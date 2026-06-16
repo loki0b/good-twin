@@ -1,11 +1,17 @@
-import { writeGreenLeds, writeRedLeds } from "../../electron/fpgaHandler.js"
-
-async function greenLedsBus(data: number) {
-    writeGreenLeds(data);
+async function writeGreenLeds(data: number) {
+    await (window as any).electron.writeGreenLedsBus(data);
 }
 
-async function redLedsBus(data: number) {
-    writeRedLeds(data);
+async function writeRedLeds(data: number) {
+    await (window as any).electron.writeRedLedBus(data);
 }
 
-export { greenLedsBus, redLedsBus }
+async function readSwitchs() {
+    return await (window as any).electron.readSwitchBus();
+}
+
+async function readPushButtons() {
+    return await (window as any).electron.readPushButtonBus()
+}
+
+export { writeGreenLeds, writeRedLeds, readPushButtons, readSwitchs }
