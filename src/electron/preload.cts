@@ -1,11 +1,19 @@
 const electron = require("electron");
 
 electron.contextBridge.exposeInMainWorld("electron", {
-    writeGreenLeds: async (_: any, data: number) => {
-        electron.ipcRenderer.invoke("writeGreenLeds")
+    writeGreenLedBus: (data: number) => {
+        electron.ipcRenderer.invoke("write-green-led-bus", data);
     },
 
-    writeRedLeds: async (_: any, data: number) => {
-        electron.ipcRenderer.invoke("writeRedLeds")
+    writeRedLedBus: (data: number) => {
+        electron.ipcRenderer.invoke("write-red-led-bus", data);
+    },
+
+    readSwitchBus: () => {
+        return electron.ipcRenderer.invoke("read-switch-bus");
+    },
+
+    readPushButtonBus: () => {
+        return electron.ipcRenderer.invoke("read-push-button-bus");
     }
 });
