@@ -4,14 +4,18 @@ import raven from "../assets/raven.png"
 
 type PageView = 'start' | 'scanning' | 'netList' | 'netConfig' | 'netDetail';
 
+type Bttn = {
+    buttonTitle: string,
+    isOn: boolean
+}
+
 interface StatePage {
     id: number;
     page: PageView;
 }
 
 
-const Screen = () => {
-    const keyBoardKeys = pushButtonBus();
+const Screen = ({bttns}: {bttns: Bttn[]}) => {
     const [curPage, setCurrPage] = useState<PageView>('start');
 
     const statePages: StatePage[] = [
