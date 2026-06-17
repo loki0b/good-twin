@@ -9,15 +9,11 @@ electron.contextBridge.exposeInMainWorld("electron", {
         electron.ipcRenderer.invoke("write-red-led-bus", data);
     },
 
-    readSwitchBus: () => {
-        return electron.ipcRenderer.invoke("read-switch-bus");
+    onPushButtonChange: (callback: (state: number) => void) => {
+        electron.ipcRenderer.on("push-button-changed", (_: any, state: number) => callback(state));
     },
 
-    readPushButtonBus: () => {
-        return electron.ipcRenderer.invoke("read-push-button-bus");
-    },
-
-    python: () => {
-        return electron.ipcRenderer.invoke("python");
+    onSwitchChange: (callback: (state: number) =>void) => {
+        electron.ipcRenderer.on("switch-changed", (_: any, state: number) => callback(state));
     }
 });

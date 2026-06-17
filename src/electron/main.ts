@@ -14,11 +14,36 @@ app.on("ready", () => {
   if (process.env.NODE_ENV == "development") mainWindow.loadURL("http://localhost:5123");
   else mainWindow.loadFile(path.join(app.getAppPath() + "/dist-react/index.html"));
 
-  try {
-    initFPGA();
-  } catch (err) {
-    console.log(err);
-  }
+  initFPGA();
+
+  // Polling buttons state
+  let lastButtonState = -1;
+  setInterval(async () => {
+    try {
+      const currentState = await readPushButtons();
+
+      if ((currentState !== null) && (currentState != lastButtonState)) {
+        lastButtonState = currentState;
+
+        mainWindow.webContents.send("push-button-changed", currentState);
+      }
+    } catch (err) {}
+  }, 50);
+
+
+  // Polling switchs states
+  let lastSwitchState = -1;
+  setInterval(async () => {
+    try {
+      const currentState = await readSwitches();
+
+      if ((currentState !== null) && (currentState != lastButtonState)) {
+        lastSwitchState = currentState;
+
+        mainWindow.webContents.send("switch-changed", currentState);
+      }
+    } catch (err) {}
+  });
 });
 
 app.on("ready", () => {
@@ -44,9 +69,5 @@ app.on("ready", () => {
 });
 
 app.on("will-quit", () =>{
-  try {
-    closeFPGA();
-  } catch (err) {
-    console.log(err);
-  }
+  closeFPGA();
 });
