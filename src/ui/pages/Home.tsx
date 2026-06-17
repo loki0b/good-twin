@@ -1,6 +1,10 @@
+import GoodTwinBody from "../components/GoodTwinBody.js";
+
 function Home() {
     return (
-        <button>Clique!</button>
+        <div className="bg-black">
+            <GoodTwinBody />
+        </div>
     )
 }
 
