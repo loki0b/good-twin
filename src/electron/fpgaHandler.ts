@@ -11,15 +11,19 @@ const BUFFER_SIZE      = 4;
 
 let FPGA_FD: fs.FileHandle | null = null;
 
-async function initFPGA() {
+async function initFPGA(): Promise<boolean> {
     try {
         if (!FPGA_FD) {
             FPGA_FD = await fs.open(FPGA_DEV, "r+");
             console.log("FPGA ready");
+
+            return true;
         }
     } catch (err) {
         console.error(`Failed to open FPGA: ${err}`);
     }
+
+    return false;
 }
 
 async function closeFPGA() {
