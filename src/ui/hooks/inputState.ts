@@ -2,19 +2,25 @@ import { useState, useEffect } from "react";
 
 function pushButtonBus() {
     const [buttons, setButtons] = useState({
-        push_button0: false,
-        push_button1: false,
-        push_button2: false,
-        push_button3: false
+        RIGHT_BTN:  false,
+        DOWN_BTN:   false,
+        UP_BTN:     false,
+        LEFT_BTN:   false,
+        ENTER_BNT:  false,
+        RETURN_BTN: false,
+        ON_OFF_BNT: false
     });
 
     useEffect(() => {
         (window as any).electron.onPushButtonChange((state: number) => {
             setButtons({
-                push_button0: (state & 0b0001) !== 0,
-                push_button1: (state & 0b0010) !== 0,
-                push_button2: (state & 0b0100) !== 0,
-                push_button3: (state & 0b1000) !== 0
+                RIGHT_BTN:  (state & 0b0001) !== 0,
+                DOWN_BTN:   (state & 0b0010) !== 0,
+                UP_BTN:     (state & 0b0100) !== 0,
+                LEFT_BTN:   (state & 0b1000) !== 0,
+                ENTER_BNT:  (state & 0b1100) === 0b1100,
+                RETURN_BTN: (state & 0b0011) === 0b0011,
+                ON_OFF_BNT: (state & 0b1111) === 0b1111
             });
         });
     }, []);
@@ -68,7 +74,7 @@ function switchBus() {
                 switch17: (state & 0b100000000000000000) !== 0,
             });
         });
-    });
+    }, []);
 
     return switchs;
 }
