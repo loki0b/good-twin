@@ -1,13 +1,13 @@
 import fs from "node:fs/promises";
 
-const FPGA_DEV        = "/dev/fpga";
-const PUSH_BUTTON_BUS = 0xC000;
-const SWITCH_BUS      = 0xC020;
-const GREEN_LED_BUS   = 0xC040;
-const RED_LED_BUS     = 0xC060;
+const FPGA_DEV         = "/dev/fpga";
+const PUSH_BUTTON_ADDR = 0xC000;
+const SWITCH_ADDR      = 0xC020;
+const GREEN_LED_ADDR   = 0xC040;
+const RED_LED_ADDR     = 0xC060;
 // const HEX
 
-const BUFFER_SIZE     = 4;
+const BUFFER_SIZE      = 4;
 
 let FPGA_FD: fs.FileHandle | null = null;
 
@@ -30,35 +30,19 @@ async function closeFPGA() {
 }
 
 async function writeGreenLeds(data: number) {
-    try {
-        await writeToBus(GREEN_LED_BUS, data);
-    } catch (err) {
-        console.log(err);
-    }
+    await writeToBus(GREEN_LED_ADDR, data);
 }
 
 async function writeRedLeds(data: number) {
-    try {
-        await writeToBus(RED_LED_BUS, data);
-    } catch (err) {
-        console.log(err);
-    }
+    await writeToBus(RED_LED_ADDR, data);
 }
 
 async function readSwitches() {
-    try {
-        return await readFromBus(SWITCH_BUS);
-    } catch (err) {
-        console.log(err);
-    }
+    return await readFromBus(SWITCH_ADDR);
 }
 
 async function readPushButtons() {
-    try {
-       return await readFromBus(PUSH_BUTTON_BUS);
-    } catch (err) {
-        console.log(err);
-    }
+    return await readFromBus(PUSH_BUTTON_ADDR);
 }
 
 async function writeToBus(busAddress: number, data: number) {
@@ -89,6 +73,7 @@ async function readFromBus(busAddress: number) {
         return data;
     } catch (err) {
         console.error(`Error: 0x${busAddress.toString(16)}: ${err}`);
+        return -1
     }
 }
 
