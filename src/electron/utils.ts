@@ -9,4 +9,12 @@ function getPreloadPath() {
     );
 }
 
-export { getPreloadPath }
+function getPythonPath() {
+    return path.join(
+        app.getAppPath(),
+        (process.env.NODE_ENV == "development") ? "." : "..",
+        "/dist-python/wifi_handler"
+    );
+}
+
+export { getPreloadPath, getPythonPath }

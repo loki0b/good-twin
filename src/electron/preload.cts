@@ -15,5 +15,9 @@ electron.contextBridge.exposeInMainWorld("electron", {
 
     readPushButtonBus: () => {
         return electron.ipcRenderer.invoke("read-push-button-bus");
+    },
+
+    python: () => {
+        return electron.ipcRenderer.invoke("python");
     }
 });
