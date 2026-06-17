@@ -18,9 +18,9 @@ function pushButtonBus() {
                 DOWN_BTN:   (state & 0b0010) !== 0,
                 UP_BTN:     (state & 0b0100) !== 0,
                 LEFT_BTN:   (state & 0b1000) !== 0,
-                ENTER_BNT:  (state & 0b1100) !== 0,
-                RETURN_BTN: (state & 0b0011) !== 0,
-                ON_OFF_BNT: (state & 0b1111) !== 0
+                ENTER_BNT:  (state & 0b1100) === 0b1100,
+                RETURN_BTN: (state & 0b0011) === 0b0011,
+                ON_OFF_BNT: (state & 0b1111) === 0b1111
             });
         });
     }, []);
@@ -74,7 +74,7 @@ function switchBus() {
                 switch17: (state & 0b100000000000000000) !== 0,
             });
         });
-    });
+    }, []);
 
     return switchs;
 }
