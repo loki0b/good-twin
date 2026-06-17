@@ -11,7 +11,7 @@ interface StatePage {
 
 
 const Screen = () => {
-    //const keyBoardKeys = pushButtonBus();
+    const keyBoardKeys = pushButtonBus();
     const [curPage, setCurrPage] = useState<PageView>('start');
 
     const statePages: StatePage[] = [
