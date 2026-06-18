@@ -4,14 +4,12 @@
     "extraResources": [
         "dist-electron/preload.cjs",
         "dist-python/scanner",
-        "dist-python/hostadp",
+        "dist-python/hostapd",
         "dist-python/dnsmasq",
         "dist-python/client_monitor"
     ],
     "linux": {
         "target": [
-            "deb",
-            "pacman",
             "AppImage"
         ],
         "category": "Utility"
