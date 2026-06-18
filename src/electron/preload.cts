@@ -15,5 +15,15 @@ electron.contextBridge.exposeInMainWorld("electron", {
 
     onSwitchChange: (callback: (state: number) =>void) => {
         electron.ipcRenderer.on("switch-changed", (_: any, state: number) => callback(state));
-    }
+    },
+
+    startAp: (ssid: string, channel: number, band: string, password?: string) => { 
+        electron.ipcRenderer.invoke("start-ap", ssid, channel, band, password);
+    },
+    
+    stopAp: () => electron.ipcRenderer.invoke("stop-ap"),
+    startDhcp: (captive: boolean) => electron.ipcRenderer.invoke("start-dhcp", captive),
+    stopDhcp: () => electron.ipcRenderer.invoke("stop-dhcp"),
+    scanNetworks: () => electron.ipcRenderer.invoke("scan-networks"),
+    getClients: () => electron.ipcRenderer.invoke("get-clients")
 });

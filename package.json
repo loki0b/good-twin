@@ -11,7 +11,7 @@
     "dev:react": "vite",
     "dev:electron": "npm run transpile:electron; NODE_ENV=development electron .",
     "build:react": "tsc && vite build",
-    "build:python": "source src/python/.venv/bin/activate; pyinstaller --clean --onefile --paths=src/python --hidden-import=scapy --hidden-import=tools.dnsmasq --hidden-import=tools.hostapd --hidden-import=tools.sniffer --specpath=dist-python --distpath=dist-python --noconfirm src/python/wifi_handler.py",
+    "build:python": "source src/python/.venv/bin/activate && pyinstaller --clean --onefile --paths src/python/ --hidden-import=scapy --distpath=dist-python --specpath=dist-python --noconfirm src/python/scanner.py && pyinstaller --clean --onefile --paths src/python --distpath=dist-python --specpath=dist-python --noconfirm src/python/hostapd.py && pyinstaller --clean --onefile --paths src/python --distpath=dist-python --specpath=dist-python --noconfirm src/python/dnsmasq.py && pyinstaller --clean --onefile --paths src/python --distpath=dist-python --specpath=dist-python --noconfirm src/python/client_monitor.py && pyinstaller --clean --onefile --paths src/python --distpath=dist-python --specpath=dist-python --noconfirm src/python/scanner.py",
     "preview": "vite preview",
     "transpile:electron": "tsc --project src/electron/tsconfig.json",
     "dist:linux": "npm run build:python && npm run transpile:electron && npm run build:react && electron-builder --linux --x64"
