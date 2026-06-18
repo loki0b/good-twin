@@ -1,11 +1,10 @@
-import arrow from "../assets/arrow.svg"
 
-const Arrow = ({direction}: {direction: string}) => {
+const Arrow = ({image, pressed}: {image: string, pressed: boolean}) => {
   return (
     <div 
-    className={`h-20 drop-shadow-md shadow-neutral-500 bg-contain bg-no-repeat bg-center w-20 ${direction}`}
-    style={{ backgroundImage: `url(${arrow})` }}
+    className={`h-20 ${pressed && 'translate-y-1'} flex justify-center items-center w-20`}
     >
+        <img src={image} alt="arrow" />
     </div>
   )
 }
