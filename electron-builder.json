@@ -3,7 +3,10 @@
     "files": ["dist-electron", "dist-react"],
     "extraResources": [
         "dist-electron/preload.cjs",
-        "dist-python/wifi_handler"
+        "dist-python/scanner",
+        "dist-python/hostadp",
+        "dist-python/dnsmasq",
+        "dist-python/client_monitor"
     ],
     "linux": {
         "target": [
