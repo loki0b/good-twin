@@ -54,7 +54,7 @@ function stopDhcp(): boolean {
 
 function scanNetworks(): Promise<any> {
     return new Promise((resolve, reject) => {
-        const execPath = path.join(getPythonPath(), "sniffer");
+        const execPath = path.join(getPythonPath(), "scanner");
         execFile(execPath, (error, stdout) => {
             if (error) {
                 reject(error);
