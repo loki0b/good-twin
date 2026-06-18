@@ -1,9 +1,9 @@
-function writeGreenLeds(data: number) {
-    (window as any).electron.writeGreenLedsBus(data);
+async function writeGreenLeds(data: number): Promise<void> {
+    await window.electron.writeGreenLedBus(data);
 }
 
-function writeRedLeds(data: number) {
-    (window as any).electron.writeRedLedBus(data);
+async function writeRedLeds(data: number): Promise<void>{
+    await window.electron.writeRedLedBus(data);
 }
 
 export { writeGreenLeds, writeRedLeds }

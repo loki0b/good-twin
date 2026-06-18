@@ -13,23 +13,23 @@ const GoodTwinBody = () => {
     const bttnData = [
         {
             buttonTitle: 'right',
-            isOn: chekKeyboard.RIGHT_BTN
+            isOn: chekKeyboard.RIGHT_BTN && !chekKeyboard.RETURN_BTN
         },
         {
             buttonTitle: 'left',
-            isOn: chekKeyboard.LEFT_BTN
+            isOn: chekKeyboard.LEFT_BTN && !chekKeyboard.ENTER_BNT
         },
         {
             buttonTitle: 'top',
-            isOn: chekKeyboard.UP_BTN
+            isOn: chekKeyboard.UP_BTN && !chekKeyboard.ENTER_BNT
         },
         {
             buttonTitle: 'bottom',
-            isOn: chekKeyboard.DOWN_BTN
+            isOn: chekKeyboard.DOWN_BTN && !chekKeyboard.RETURN_BTN
         },
         {
             buttonTitle: 'middle',
-            isOn: chekKeyboard.ENTER_BNT
+            isOn: chekKeyboard.ENTER_BNT && !chekKeyboard.ON_OFF_BNT
         },
         {
             buttonTitle: 'onOff',
@@ -37,7 +37,7 @@ const GoodTwinBody = () => {
         },
         {
             buttonTitle: 'return',
-            isOn: chekKeyboard.RETURN_BTN
+            isOn: chekKeyboard.RETURN_BTN && !chekKeyboard.ON_OFF_BNT
         }
     ]
     return (
@@ -45,8 +45,8 @@ const GoodTwinBody = () => {
             className='bg-contain flex static justify-center bg-center h-screen w-full bg-no-repeat'
             style={{ backgroundImage: `url(${body})` }}
         >
-            <div className="absolute bottom-54 right-36 flex items-center gap-4">
-                <Screen/>
+            <div className="absolute bottom-64 right-36 flex items-center gap-4">
+                <Screen bttns={bttnData}/>
                 <Button bttnOn={bttnData}/>
             </div>
         </div>
