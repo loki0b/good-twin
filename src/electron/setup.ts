@@ -60,30 +60,49 @@ function startFpgaPolling(mainWindow: BrowserWindow) {
 
 function setupKeyboardFallback(mainWindow: BrowserWindow) {
   let virtualButtonState = 0;
+  let virtualSwitchState = 0;
 
   mainWindow.webContents.on("before-input-event", (event, input) => {
-    let bit = 0;
+    if (input.type === "keyDown" && !input.isAutoRepeat) {
+      let switchBit = 0;
+      switch (input.key.toLowerCase()) {
+        case "q": switchBit = 0b00001; break; // Switch 0
+        case "w": switchBit = 0b00010; break; // Switch 1
+        case "e": switchBit = 0b00100; break; // Switch 2
+        case "r": switchBit = 0b01000; break; // Switch 3
+        case "t": switchBit = 0b10000; break; // Switch 4
+      }
+
+      if (switchBit !== 0) {
+        virtualSwitchState ^= switchBit;
+        mainWindow.webContents.send("switch-changed", virtualSwitchState);
+        return;
+      }
+    }
+
+    let buttonBit = 0;
     switch (input.key) {
-      case "ArrowRight": bit = 0b0001; break;
-      case "ArrowDown":  bit = 0b0010; break;
-      case "ArrowUp":    bit = 0b0100; break;
-      case "ArrowLeft":  bit = 0b1000; break;
-      case "Enter":      bit = 0b1100; break;
-      case "Escape":     bit = 0b0011; break;
-      case "Backspace":  bit = 0b1111; break;
-      default: return;
+      case "ArrowRight": buttonBit = 0b0001; break;
+      case "ArrowDown":  buttonBit = 0b0010; break;
+      case "ArrowUp":    buttonBit = 0b0100; break;
+      case "ArrowLeft":  buttonBit = 0b1000; break;
+      case "Enter":      buttonBit = 0b1100; break;
+      case "Escape":     buttonBit = 0b0011; break;
+      case "Backspace":  buttonBit = 0b1111; break;
     }
 
-    const prevState = virtualButtonState;
+    if (buttonBit !== 0) {
+      const prevState = virtualButtonState;
 
-    if (input.type === "keyDown") {
-      virtualButtonState |= bit;
-    } else if (input.type === "keyUp") {
-      virtualButtonState &= ~bit;
-    }
+      if (input.type === "keyDown") {
+        virtualButtonState |= buttonBit;
+      } else if (input.type === "keyUp") {
+        virtualButtonState &= ~buttonBit;
+      }
 
-    if (virtualButtonState !== prevState) {
-      mainWindow.webContents.send("push-button-changed", virtualButtonState);
+      if (virtualButtonState !== prevState) {
+        mainWindow.webContents.send("push-button-changed", virtualButtonState);
+      }
     }
   });
 }
