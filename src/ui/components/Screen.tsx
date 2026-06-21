@@ -79,11 +79,14 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
         fetchNetworks();
     }, [curPage]); 
 
+    const curListItems = scanList.filter(item => item.essid.length > 0)
+
     useEffect(() => {
         if (curPage !== 'netList' || scanList.length === 0) return;
 
         const activeButton = bttns.find(b => b.isOn);
         if (!activeButton) return;
+
 
         setIsListItemSelected((prevSelected) => {
             const current = prevSelected ?? 0;
@@ -92,7 +95,7 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
             if (activeButton.buttonTitle === 'top') {
                 nextIndex = Math.max(0, current - 1);
             } else if (activeButton.buttonTitle === 'bottom') {
-                nextIndex = Math.min(scanList.length - 1, current + 1);
+                nextIndex = Math.min(curListItems.length - 1, current + 1);
             } else if (activeButton.buttonTitle === 'middle') {
                 setScanElement(scanList[current])
                 goToPage('netConfig')
@@ -171,7 +174,6 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
 
     }, [bttns, curPage]); 
 
-    
 
     return (
         <div className='w-141.75 h-71.75 bg-orange-500 border-8 overflow-hidden border-black'>
@@ -201,16 +203,19 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
                         </p>
                         <div className="h-40 mt-4 overflow-y-auto w-full [&::-webkit-scrollbar]:hidden" ref={boxRef}>
                             {
-                                scanList.map((listElement, index) => (
-                                    <div 
-                                        key={index} 
-                                        className={`${isListItemSelected === index ? 'bg-white text-orange-500' : 'text-white'} font-bold h-8 w-full px-6 flex items-center`}
-                                    >
-                                        {listElement.essid}
-                                    </div>
-                                ))
+                                curListItems.map((listElement, index) => {
+                                    if (listElement.essid.length === 0) return;
+                                    return (
+                                        <div 
+                                            key={index} 
+                                            className={`${isListItemSelected === index ? 'bg-white text-orange-500' : 'text-white'} font-bold h-8 w-full px-6 flex items-center`}
+                                        >
+                                            {listElement.essid}
+                                        </div>
+                                    );
+                                })
                             }
-                        </div>
+                                                </div>
                     </div>
                 )
             }
