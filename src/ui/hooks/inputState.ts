@@ -30,11 +30,11 @@ function pushButtonBus() {
 
 function switchBus() {
     const [switchs, setSwitchs] = useState({
-        FREQ_2_4:  false,
-        FREQ_5:    false,
+        FREQ:  false,
         CHN_OPT_1: false,
         CHN_OPT_2: false,
         CHN_OPT_3: false,
+        switch4:   false,
         switch5:   false,
         switch6:   false,
         switch7:   false,
@@ -54,11 +54,11 @@ function switchBus() {
     useEffect(() =>{
         (window as any).electron.onSwitchChange( (state: number) => {
             setSwitchs({
-                FREQ_2_4:  (state & 0b000000000000000001) !== 0,
-                FREQ_5:    (state & 0b000000000000000010) !== 0,
-                CHN_OPT_1: (state & 0b000000000000000100) !== 0,
-                CHN_OPT_2: (state & 0b000000000000001000) !== 0,
-                CHN_OPT_3: (state & 0b000000000000010000) !== 0,
+                FREQ:      (state & 0b000000000000000001) !== 0,
+                CHN_OPT_1: (state & 0b000000000000000010) !== 0,
+                CHN_OPT_2: (state & 0b000000000000000100) !== 0,
+                CHN_OPT_3: (state & 0b000000000000001000) !== 0,
+                switch4:   (state & 0b000000000000010000) !== 0,
                 switch5:   (state & 0b000000000000100000) !== 0,
                 switch6:   (state & 0b000000000001000000) !== 0,
                 switch7:   (state & 0b000000000010000000) !== 0,
