@@ -1,7 +1,7 @@
 import body from "../assets/body.svg"
 import Screen from "./Screen.js"
 import Button from "./Button.js"
-import { pushButtonBus } from "../hooks/inputState.js"
+import { pushButtonBus, switchBus } from "../hooks/inputState.js"
 
 type Bttn = {
     buttonTitle: string,
@@ -10,6 +10,7 @@ type Bttn = {
 
 const GoodTwinBody = () => {
     const chekKeyboard = pushButtonBus();
+    const checkToggle = switchBus()
     const bttnData = [
         {
             buttonTitle: 'right',
@@ -38,7 +39,27 @@ const GoodTwinBody = () => {
         {
             buttonTitle: 'return',
             isOn: chekKeyboard.RETURN_BTN && !chekKeyboard.ON_OFF_BNT
-        }
+        },
+        {
+            buttonTitle: 'Q_2.4',
+            isOn: checkToggle.CHN_OPT_1 
+        },
+        {
+            buttonTitle: 'W_5',
+            isOn: checkToggle.CHN_OPT_2 
+        },
+        {
+            buttonTitle: 'E_CH1',
+            isOn: checkToggle.CHN_OPT_3
+        },
+        {
+            buttonTitle: 'R_CH2',
+            isOn: checkToggle.FREQ_2_4
+        },
+        {
+            buttonTitle: 'T_CH3',
+            isOn: checkToggle.FREQ_5
+        },
     ]
     return (
         <div 
