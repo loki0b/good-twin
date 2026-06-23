@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import raven from "../assets/raven1.png";
-import { scanNetworks, startAp, getClients } from "../lib/wifiApi.js";
+import { scanNetworks, startAp, getClients, startDhcp, stopAp } from "../lib/wifiApi.js";
 
-type PageView = 'start' | 'scanning' | 'netList' | 'netConfig' | 'netDetail';
+type PageView = 'start' | 'scanning' | 'netList' | 'netConfig' | 'netDetail' | 'waiting';
 type Frequency = '2.4' | '5';
 
 type Bttn = {
@@ -24,7 +24,7 @@ type Client = {
     ip: string
 }
 
-const Screen = ({ bttns }: { bttns: Bttn[] }) => {
+const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
     const [curPage, setCurrPage] = useState<PageView>('start');
     const [scanList, setScanList] = useState<ScanList[]>([]);
     const [scanElement, setScanElement] = useState<null | ScanList>(null);
@@ -32,47 +32,50 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
     const [fieldData, setFieldData] = useState({
         ssid: '',
         channel: 1,
-        band: '2.4GHz' as Frequency,
+        band: '2.4' as Frequency,
         password: ''
     });
 
     const [clientList, setClientList] = useState<Client[]>([]);
 
-    const [isListItemSelected, setIsListItemSelected] = useState<null | number>(0);
-    const [isItemSelected, setIsItemSelected] = useState<null | number>(0);
+    const [isListItemSelected, setIsListItemSelected] = useState<null | number>(null);
+    const [isItemSelected, setIsItemSelected] = useState<null | number>(null);
     const [isFieldSelected, setIsFieldSelected] = useState<number>(0);
-    
+
     const boxRef = useRef<HTMLDivElement>(null);
-    const lastRef = useRef<HTMLDivElement>(null);
+    const lastListRef = useRef<HTMLDivElement>(null);
     const fieldRef = useRef<HTMLDivElement>(null);
 
     const goToPage = (pageName: PageView) => setCurrPage(pageName);
 
-    const curListItems = scanList.filter(item => item.essid.length > 0);
+    const curListItems = useMemo(
+        () => scanList.filter(item => item.essid.length > 0),
+        [scanList]
+    );
 
     useEffect(() => {
         if (curPage === 'start' && bttns[4]?.isOn) {
             goToPage('scanning');
         }
-    }, [curPage, bttns]); 
+    }, [curPage, bttns]);
 
     useEffect(() => {
-        if (curPage !== 'scanning') return; 
+        if (curPage !== 'scanning') return;
 
         const fetchNetworks = async () => {
             try {
                 const scan = await scanNetworks();
                 setScanList(scan);
-                setIsListItemSelected(scan.length > 0 ? 0 : null); 
-                goToPage('netList'); 
+                setIsListItemSelected(scan.length > 0 ? 0 : null);
+                goToPage('netList');
             } catch (error) {
                 console.error("Failed to scan networks:", error);
-                goToPage('start'); 
+                goToPage('start');
             }
         };
 
         fetchNetworks();
-    }, [curPage]); 
+    }, [curPage]);
 
     useEffect(() => {
         if (curPage !== 'netList' || curListItems.length === 0) return;
@@ -100,9 +103,9 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
                     ssid: selectedNet?.essid || '',
                     password: selectedNet?.password || '',
                     channel: Number(selectedNet?.channel) || 1,
-                    band: (String(selectedNet?.frequency).includes('5') ? '5GHz' : '2.4GHz') as Frequency
+                    band: String(selectedNet?.frequency).includes('5') ? '5' : '2.4' as Frequency
                 });
-                setIsFieldSelected(0); 
+                setIsFieldSelected(0);
                 goToPage('netConfig');
             }
 
@@ -115,6 +118,7 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
             return nextIndex;
         });
     }, [bttns, curPage]);
+    
 
     useEffect(() => {
         if (curPage !== 'netConfig') return;
@@ -122,28 +126,14 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
         const activeButton = bttns.find(b => b.isOn);
         if (!activeButton) return;
 
-        const MAX_FIELDS = 2; 
+        const MAX_FIELD_INDEX = 3;
 
-        if (activeButton.buttonTitle === 'onOff' ) {
+        if (activeButton.buttonTitle === 'onOff') {
             goToPage('start');
             return;
         } else if (activeButton.buttonTitle === 'return') {
             goToPage('netList');
             return;
-        }
-
-        if (activeButton.buttonTitle === 'Q_2.4') {
-            setFieldData(prev => ({ ...prev, band: '2.4' }));
-        } else if (activeButton.buttonTitle === 'W_5') {
-            setFieldData(prev => ({ ...prev, band: '5' }));
-        }
-
-        if (activeButton.buttonTitle === 'E_CH1' && isFieldSelected != 0 && isFieldSelected != 1) {
-            setFieldData(prev => ({ ...prev, channel: 1 }));
-        } else if (activeButton.buttonTitle === 'R_CH2' && isFieldSelected != 0 && isFieldSelected != 1) {
-            setFieldData(prev => ({ ...prev, channel: 6 }));
-        } else if (activeButton.buttonTitle === 'T_CH3' && isFieldSelected != 0 && isFieldSelected != 1) {
-            setFieldData(prev => ({ ...prev, channel: 11 }));
         }
 
         setIsFieldSelected((prevSelected) => {
@@ -153,13 +143,11 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
             if (activeButton.buttonTitle === 'top') {
                 nextIndex = Math.max(0, current - 1);
             } else if (activeButton.buttonTitle === 'bottom') {
-                nextIndex = Math.min(MAX_FIELDS, current + 1);
-            } else if (activeButton.buttonTitle === 'middle' && current === 2){
-                console.log(fieldData)
+                nextIndex = Math.min(MAX_FIELD_INDEX, current + 1);
+            } else if (activeButton.buttonTitle === 'middle' && current === MAX_FIELD_INDEX) {
                 startAp(fieldData.ssid, fieldData.channel, fieldData.band, fieldData.password);
-    
-                console.log(startAp(fieldData.ssid, fieldData.channel, fieldData.band, fieldData.password))
-                goToPage('netDetail');
+                startDhcp(false);
+                goToPage('waiting');
             }
 
             if (nextIndex !== current) {
@@ -173,7 +161,33 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
             return nextIndex;
         });
 
-    }, [bttns, curPage, fieldData]); 
+    }, [bttns, curPage]); 
+
+    useEffect(() => {
+    if (curPage !== 'netConfig') return;
+
+    const activeSwitch = swtch.find(s => s.isOn);
+    if (!activeSwitch) return;
+
+    const isValidField = isFieldSelected !== 0 && isFieldSelected !== 1;
+    if (!isValidField) return;
+
+    const title = activeSwitch.buttonTitle;
+
+    if (title === 'Q') {
+        setFieldData(prev => {
+            const targetBand = prev.band === '2.4' ? '5' : '2.4'; 
+            return prev.band === targetBand ? prev : { ...prev, band: targetBand };
+        });
+    } else if (title === 'W') {
+        setFieldData(prev => prev.channel === 1 ? prev : { ...prev, channel: 1 });
+    } else if (title === 'E') {
+        setFieldData(prev => prev.channel === 6 ? prev : { ...prev, channel: 6 });
+    } else if (title === 'R') {
+        setFieldData(prev => prev.channel === 11 ? prev : { ...prev, channel: 11 });
+    }
+
+}, [swtch, curPage, isFieldSelected]);
 
     useEffect(() => {
         if (curPage !== 'netDetail') return;
@@ -201,7 +215,8 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
         if (activeButton.buttonTitle === 'onOff') {
             goToPage('start');
             return;
-        } else if (activeButton.buttonTitle === 'return') {
+        } else if (activeButton.buttonTitle === 'return' && isFieldSelected !== 0 && isFieldSelected !== 1) {
+            stopAp();
             goToPage('netConfig');
             return;
         }
@@ -217,7 +232,7 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
             }
 
             setTimeout(() => {
-                const container = lastRef.current;
+                const container = lastListRef.current;
                 const element = container?.children[nextIndex] as HTMLElement;
                 if (element) element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 0);
@@ -225,6 +240,17 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
             return nextIndex;
         });
     }, [bttns, curPage, clientList.length]);
+
+    useEffect(() => {
+        if (curPage !== 'waiting') return;
+
+        const timer = setTimeout(() => {
+            goToPage('netDetail');
+        }, 3000);
+
+        return () => clearTimeout(timer);
+
+    }, [curPage, goToPage]);
 
     return (
         <div className='w-141.75 h-71.75 bg-orange-500 border-8 overflow-hidden border-black'>
@@ -242,15 +268,20 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
                     Scanning...
                 </div>
             )}
+            {curPage === 'waiting' && (
+                <div className="w-full h-full pulse flex items-center justify-center font-pixelify-sans text-2xl">
+                    Wait a moment...
+                </div>
+            )}
             {curPage === 'netList' && (
                 <div className="p-4 font-pixelify-sans h-full flex flex-col">
-                    <p className="bg-black font-black text-xl py-2 pl-6 text-orange-500 w-full">
+                    <p className="bg-black font-black text-md py-2 pl-6 text-orange-500 w-full">
                         AVAILABLE NETWORKS
                     </p>
                     <div className="h-40 mt-4 overflow-y-auto w-full [&::-webkit-scrollbar]:hidden" ref={boxRef}>
                         {curListItems.map((listElement, index) => (
-                            <div 
-                                key={index} 
+                            <div
+                                key={index}
                                 className={`${isListItemSelected === index ? 'bg-white text-orange-500' : 'text-white'} font-bold h-8 w-full px-6 flex items-center`}
                             >
                                 {listElement.essid}
@@ -262,54 +293,29 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
             {curPage === 'netConfig' && (
                 <div className="p-4 font-pixelify-sans font-bold h-full overflow-hidden">
                     <div ref={fieldRef} className="text-md flex flex-col gap-0.5 text-orange-700 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden">
-                        
+
                         ESSID
-                        {
-                            isFieldSelected === 0 ? (
-                                <input 
-                                type="text" 
-                                value={fieldData.ssid}
-                                onChange={(e) => setFieldData({ ...fieldData, ssid: e.target.value })} 
-                                className={`${isFieldSelected === 0 ? 'bg-black text-white' : 'bg-white text-orange-500'} w-full h-8 px-2 outline-none`} 
-                                ref={(el) => { if (isFieldSelected === 0) el?.focus(); }} 
-                            />
-                            ): (
-                                <input 
-                                disabled
-                                type="text" 
-                                value={fieldData.ssid}
-                                onChange={(e) => setFieldData({ ...fieldData, ssid: e.target.value })} 
-                                className={`${isFieldSelected === 0 ? 'bg-black text-white' : 'bg-white text-orange-500'} w-full h-8 px-2 outline-none`} 
-                                ref={(el) => { if (isFieldSelected === 0) el?.focus(); }} 
-                            />
-                            )
-                        }
+                        <input
+                            type="text"
+                            disabled={isFieldSelected !== 0}
+                            value={fieldData.ssid}
+                            onChange={(e) => setFieldData({ ...fieldData, ssid: e.target.value })}
+                            className={`${isFieldSelected === 0 ? 'bg-black text-white' : 'bg-white text-orange-500'} w-full h-8 px-2 outline-none`}
+                            ref={(el) => { if (isFieldSelected === 0) el?.focus(); }}
+                        />
 
                         PASSWORD
-                        {
-                            isFieldSelected === 1 ? (
-                                <input 
-                                    type="text" 
-                                    value={fieldData.password}
-                                    onChange={(e) => setFieldData({ ...fieldData, password: e.target.value })} 
-                                    className={`${isFieldSelected === 1 ? 'bg-black text-white' : 'bg-white text-orange-500 disabled:'} w-full h-8 px-2 outline-none`} 
-                                    ref={(el) => { if (isFieldSelected === 1) el?.focus(); }}
-                                />
-                            ): (
-                                <input 
-                                disabled
-                                type="text" 
-                                value={fieldData.password}
-                                onChange={(e) => setFieldData({ ...fieldData, password: e.target.value })} 
-                                className={`${isFieldSelected === 1 ? 'bg-black text-white' : 'bg-white text-orange-500 disabled:'} w-full h-8 px-2 outline-none`} 
-                                ref={(el) => { if (isFieldSelected === 1) el?.focus(); }}
-                            />
-                            )
-                        }
-                        
+                        <input
+                            type="text"
+                            disabled={isFieldSelected !== 1}
+                            value={fieldData.password}
+                            onChange={(e) => setFieldData({ ...fieldData, password: e.target.value })}
+                            className={`${isFieldSelected === 1 ? 'bg-black text-white' : 'bg-white text-orange-500'} w-full h-8 px-2 outline-none`}
+                            ref={(el) => { if (isFieldSelected === 1) el?.focus(); }}
+                        />
 
                         FREQUENCY
-                        <div className={`flex gap-4 p-1}`}>
+                        <div className="flex gap-4 p-1">
                             <div className={`${fieldData.band === '2.4' ? 'bg-black text-white' : 'bg-white text-orange-500'} flex justify-center items-center w-24 h-8`}>
                                 2.4GHz
                             </div>
@@ -331,8 +337,8 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
                                     CH 11
                                 </div>
                             </div>
-                            <div 
-                                className={`${isFieldSelected === 2 ? 'text-white' : 'text-black'} text-xl flex justify-center items-center w-24 h-8`}
+                            <div
+                                className={`${isFieldSelected === 3 ? 'text-white' : 'text-black'} text-xl flex justify-center items-center w-24 h-8`}
                             >
                                 SAVE
                             </div>
@@ -342,14 +348,14 @@ const Screen = ({ bttns }: { bttns: Bttn[] }) => {
                 </div>
             )}
             {curPage === 'netDetail' && (
-                <div className="p-4 font-pixelify-sans h-full flex flex-col font-bold overflow-y-auto w-full [&::-webkit-scrollbar]:hidden" ref={lastRef}>
+                <div className="p-4 font-pixelify-sans h-full flex flex-col font-bold overflow-y-auto w-full [&::-webkit-scrollbar]:hidden">
                     <p className="bg-black font-black text-xl py-2 pl-6 text-orange-500 w-full">
                         CONNECTED STATIONS
                     </p>
-                    <div className="h-40 mt-4">
+                    <div className="h-40 mt-4" ref={lastListRef}>
                         {clientList.map((listElement, index) => (
-                            <div 
-                                key={index} 
+                            <div
+                                key={index}
                                 className={`${isItemSelected === index ? 'text-black' : 'text-white'} font-bold h-8 w-full px-6 flex justify-between items-center`}
                             >
                                 <span>{listElement.index}</span>
