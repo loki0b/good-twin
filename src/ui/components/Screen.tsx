@@ -270,7 +270,7 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             )}
             {curPage === 'waiting' && (
                 <div className="w-full h-full pulse flex items-center justify-center font-pixelify-sans text-2xl">
-                    Wait a moment...
+                    Creating your new AP...
                 </div>
             )}
             {curPage === 'netList' && (
@@ -350,7 +350,7 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             {curPage === 'netDetail' && (
                 <div className="p-4 font-pixelify-sans h-full flex flex-col font-bold overflow-y-auto w-full [&::-webkit-scrollbar]:hidden">
                     <p className="bg-black font-black text-xl py-2 pl-6 text-orange-500 w-full">
-                        CONNECTED STATIONS
+                        CONNECTED STATIONS [{fieldData.ssid}]
                     </p>
                     <div className="h-40 mt-4" ref={lastListRef}>
                         {clientList.map((listElement, index) => (
