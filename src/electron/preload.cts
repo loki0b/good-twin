@@ -18,7 +18,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
     },
 
     startAp: (ssid: string, channel: number, band: string, password?: string) => { 
-        electron.ipcRenderer.invoke("start-ap", ssid, channel, band, password);
+        return electron.ipcRenderer.invoke("start-ap", ssid, channel, band, password);
     },
     
     stopAp: () => electron.ipcRenderer.invoke("stop-ap"),
