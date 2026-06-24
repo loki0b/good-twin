@@ -125,28 +125,28 @@ if __name__ == "__main__":
 
     hw_mode = "a" if args.band == "5" else "g"
 
-    conf_content = f"""
-        interface=ap0
-        driver=nl80211
-        ssid={args.ssid}
-        channel={args.channel}
-        hw_mode={hw_mode}
-        macaddr_acl=0
-        auth_algs=1
-        ignore_broadcast_ssid=0
-    """
+    conf_lines = [
+        "interface=ap0",
+        "driver=nl80211",
+        f"ssid={args.ssid}",
+        f"channel={args.channel}",
+        f"hw_mode={hw_mode}",
+        "macaddr_acl=0",
+        "auth_algs=1",
+        "ignore_broadcast_ssid=0"
+    ]
 
     if args.password:
-        conf_content += f"""
-            wpa=2
-            wpa_passphrase={args.password}
-            wpa_key_mgmt=WPA-PSK
-            rsn_pairwise=CCMP
-        """
+        conf_lines.extend([
+            "wpa=2",
+            f"wpa_passphrase={args.password}",
+            "wpa_key_mgmt=WPA-PSK",
+            "rsn_pairwise=CCMP"
+        ])
 
     conf_path = "/tmp/hostapd_good_twin.conf"
     with open(conf_path, "w") as f:
-        f.write(textwrap.dedent(conf_content).strip())
+        f.write("\n".join(conf_lines) + "\n")
 
     def handle_signal(sig, frame):
         sys.exit(0)

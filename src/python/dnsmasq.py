@@ -2,6 +2,7 @@ import argparse
 import os
 import subprocess
 import textwrap
+import time
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -30,6 +31,18 @@ if __name__ == "__main__":
     with open(conf_path, "w") as f:
         f.write(conf_content)
 
-    subprocess.run("killall dnsmasq 2>/dev/null", shell=True)
+    my_pid = os.getpid()
+    try:
+        pids = subprocess.check_output(["pidof", "dnsmasq"]).decode().split()
+        for pid in pids:
+            if int(pid) != my_pid:
+                subprocess.run(["kill", "-9", pid])
+    except Exception:
+        pass
+
+    for _ in range(20):
+        if subprocess.run("ip link show ap0", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            break
+        time.sleep(0.5)
 
     os.execvp("dnsmasq", ["dnsmasq", "-C", conf_path, "-d"])
