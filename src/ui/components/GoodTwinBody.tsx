@@ -10,55 +10,58 @@ type Bttn = {
 
 const GoodTwinBody = () => {
     const chekKeyboard = pushButtonBus();
-    const checkToggle = switchBus()
-    const bttnData = [
+    const checkToggle = switchBus();
+    
+    const bttnData: Bttn[] = [
         {
-            buttonTitle: 'right',
+            buttonTitle: 'RIGHT',
             isOn: chekKeyboard.RIGHT_BTN && !chekKeyboard.RETURN_BTN
         },
         {
-            buttonTitle: 'left',
+            buttonTitle: 'LEFT',
             isOn: chekKeyboard.LEFT_BTN && !chekKeyboard.ENTER_BNT
         },
         {
-            buttonTitle: 'top',
+            buttonTitle: 'UP',
             isOn: chekKeyboard.UP_BTN && !chekKeyboard.ENTER_BNT
         },
         {
-            buttonTitle: 'bottom',
+            buttonTitle: 'DOWN',
             isOn: chekKeyboard.DOWN_BTN && !chekKeyboard.RETURN_BTN
         },
         {
-            buttonTitle: 'middle',
+            buttonTitle: 'ENTER',
             isOn: chekKeyboard.ENTER_BNT && !chekKeyboard.ON_OFF_BNT
         },
         {
-            buttonTitle: 'onOff',
+            buttonTitle: 'ON_OFF',
             isOn: chekKeyboard.ON_OFF_BNT
         },
         {
-            buttonTitle: 'return',
+            buttonTitle: 'RETURN',
             isOn: chekKeyboard.RETURN_BTN && !chekKeyboard.ON_OFF_BNT
         }
-    ]
-    const switchData = [
+    ];
+
+    const switchData: Bttn[] = [
         {
-            buttonTitle: 'Q',
+            buttonTitle: 'SW0',
             isOn: checkToggle.FREQ
         },
         {
-            buttonTitle: 'W',
+            buttonTitle: 'SW1',
             isOn: checkToggle.CHN_OPT_1
         },
         {
-            buttonTitle: 'E',
+            buttonTitle: 'SW2',
             isOn: checkToggle.CHN_OPT_2
         },
         {
-            buttonTitle: 'R',
+            buttonTitle: 'SW3',
             isOn: checkToggle.CHN_OPT_3
         }
-    ]
+    ];
+
     return (
         <div 
             className='bg-contain flex static justify-center bg-center h-screen w-full bg-no-repeat'

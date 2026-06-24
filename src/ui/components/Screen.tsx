@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import raven from "../assets/raven1.png";
-import { scanNetworks, startAp, getClients, startDhcp, stopAp } from "../lib/wifiApi.js";
+import { scanNetworks, startAp, getClients, startDhcp, stopAp, stopDhcp } from "../lib/wifiApi.js";
 
 type PageView = 'start' | 'scanning' | 'netList' | 'netConfig' | 'netDetail' | 'waiting';
 type Frequency = '2.4' | '5';
@@ -54,7 +54,8 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
     );
 
     useEffect(() => {
-        if (curPage === 'start' && bttns[4]?.isOn) {
+        const enterPressed = bttns.find(b => b.buttonTitle === 'ENTER')?.isOn;
+        if (curPage === 'start' && enterPressed) {
             goToPage('scanning');
         }
     }, [curPage, bttns]);
@@ -83,7 +84,7 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
         const activeButton = bttns.find(b => b.isOn);
         if (!activeButton) return;
 
-        if (activeButton.buttonTitle === 'onOff') {
+        if (activeButton.buttonTitle === 'ON_OFF') {
             goToPage('start');
             return;
         }
@@ -92,11 +93,11 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             const current = prevSelected ?? 0;
             let nextIndex = current;
 
-            if (activeButton.buttonTitle === 'top') {
+            if (activeButton.buttonTitle === 'UP') {
                 nextIndex = Math.max(0, current - 1);
-            } else if (activeButton.buttonTitle === 'bottom') {
+            } else if (activeButton.buttonTitle === 'DOWN') {
                 nextIndex = Math.min(curListItems.length - 1, current + 1);
-            } else if (activeButton.buttonTitle === 'middle') {
+            } else if (activeButton.buttonTitle === 'ENTER') {
                 const selectedNet = curListItems[current];
                 setScanElement(selectedNet);
                 setFieldData({
@@ -117,7 +118,7 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
 
             return nextIndex;
         });
-    }, [bttns, curPage]);
+    }, [bttns, curPage, curListItems]);
     
 
     useEffect(() => {
@@ -128,10 +129,10 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
 
         const MAX_FIELD_INDEX = 3;
 
-        if (activeButton.buttonTitle === 'onOff') {
+        if (activeButton.buttonTitle === 'ON_OFF') {
             goToPage('start');
             return;
-        } else if (activeButton.buttonTitle === 'return') {
+        } else if (activeButton.buttonTitle === 'RETURN') {
             goToPage('netList');
             return;
         }
@@ -140,14 +141,36 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             const current = prevSelected ?? 0;
             let nextIndex = current;
 
-            if (activeButton.buttonTitle === 'top') {
+            if (activeButton.buttonTitle === 'UP') {
                 nextIndex = Math.max(0, current - 1);
-            } else if (activeButton.buttonTitle === 'bottom') {
+            } else if (activeButton.buttonTitle === 'DOWN') {
                 nextIndex = Math.min(MAX_FIELD_INDEX, current + 1);
-            } else if (activeButton.buttonTitle === 'middle' && current === MAX_FIELD_INDEX) {
-                startAp(fieldData.ssid, fieldData.channel, fieldData.band, fieldData.password);
-                startDhcp(false);
-                goToPage('waiting');
+            } else if (activeButton.buttonTitle === 'ENTER') {
+                const pwd = fieldData.password.trim();
+                
+                if (pwd.length > 0 && pwd.length < 8) {
+                    console.error("WPA2 requires a password of at least 8 characters.");
+                    return current;
+                }
+
+                const finalPwd = pwd === '' ? undefined : pwd;
+                
+                (async () => {
+                    const apStarted = await startAp(fieldData.ssid, fieldData.channel, fieldData.band, finalPwd);
+                    
+                    if (!apStarted) {
+                        console.error("Failed to start AP (hostapd crashed or timed out)");
+                        return;
+                    }
+
+                    const dhcpStarted = await startDhcp(false);
+                    
+                    if (dhcpStarted) {
+                        goToPage('waiting');
+                    } else {
+                        console.error("Failed to start DHCP");
+                    }
+                })();
             }
 
             if (nextIndex !== current) {
@@ -161,33 +184,31 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             return nextIndex;
         });
 
-    }, [bttns, curPage]); 
+    }, [bttns, curPage, fieldData]); 
 
     useEffect(() => {
-    if (curPage !== 'netConfig') return;
+        if (curPage !== 'netConfig') return;
 
-    const activeSwitch = swtch.find(s => s.isOn);
-    if (!activeSwitch) return;
-
-    const isValidField = isFieldSelected !== 0 && isFieldSelected !== 1;
-    if (!isValidField) return;
-
-    const title = activeSwitch.buttonTitle;
-
-    if (title === 'Q') {
         setFieldData(prev => {
-            const targetBand = prev.band === '2.4' ? '5' : '2.4'; 
-            return prev.band === targetBand ? prev : { ...prev, band: targetBand };
-        });
-    } else if (title === 'W') {
-        setFieldData(prev => prev.channel === 1 ? prev : { ...prev, channel: 1 });
-    } else if (title === 'E') {
-        setFieldData(prev => prev.channel === 6 ? prev : { ...prev, channel: 6 });
-    } else if (title === 'R') {
-        setFieldData(prev => prev.channel === 11 ? prev : { ...prev, channel: 11 });
-    }
+            const sw0On = swtch.find(s => s.buttonTitle === 'SW0')?.isOn;
+            const sw1On = swtch.find(s => s.buttonTitle === 'SW1')?.isOn;
+            const sw2On = swtch.find(s => s.buttonTitle === 'SW2')?.isOn;
+            const sw3On = swtch.find(s => s.buttonTitle === 'SW3')?.isOn;
 
-}, [swtch, curPage, isFieldSelected]);
+            const newBand: Frequency = sw0On ? '5' : '2.4';
+            
+            let newChannel = prev.channel;
+
+            if (sw3On) newChannel = 11;
+            else if (sw2On) newChannel = 6;
+            else if (sw1On) newChannel = 1;
+
+            if (prev.band !== newBand || prev.channel !== newChannel) {
+                return { ...prev, band: newBand, channel: newChannel };
+            }
+            return prev;
+        });
+    }, [swtch, curPage]);
 
     useEffect(() => {
         if (curPage !== 'netDetail') return;
@@ -212,11 +233,14 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
         const activeButton = bttns.find(b => b.isOn);
         if (!activeButton) return;
 
-        if (activeButton.buttonTitle === 'onOff') {
+        if (activeButton.buttonTitle === 'ON_OFF') {
+            stopAp();
+            stopDhcp();
             goToPage('start');
             return;
-        } else if (activeButton.buttonTitle === 'return' && isFieldSelected !== 0 && isFieldSelected !== 1) {
+        } else if (activeButton.buttonTitle === 'RETURN') {
             stopAp();
+            stopDhcp();
             goToPage('netConfig');
             return;
         }
@@ -225,9 +249,9 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             const current = prevSelected ?? 0;
             let nextIndex = current;
 
-            if (activeButton.buttonTitle === 'top') {
+            if (activeButton.buttonTitle === 'UP') {
                 nextIndex = Math.max(0, current - 1);
-            } else if (activeButton.buttonTitle === 'bottom') {
+            } else if (activeButton.buttonTitle === 'DOWN') {
                 nextIndex = Math.min(clientList.length - 1, current + 1);
             }
 
@@ -250,7 +274,7 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
 
         return () => clearTimeout(timer);
 
-    }, [curPage, goToPage]);
+    }, [curPage]);
 
     return (
         <div className='w-141.75 h-71.75 bg-orange-500 border-8 overflow-hidden border-black'>

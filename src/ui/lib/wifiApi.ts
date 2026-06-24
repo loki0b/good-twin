@@ -6,7 +6,7 @@ async function stopAp(): Promise<boolean> {
     return await window.electron.stopAp();
 }
 
-async function startDhcp(captive: boolean | false): Promise<boolean> {
+async function startDhcp(captive: boolean): Promise<boolean> {
     return await window.electron.startDhcp(captive);
 }
 
