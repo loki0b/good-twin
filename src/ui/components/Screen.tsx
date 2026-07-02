@@ -43,6 +43,7 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
     const [isFieldSelected, setIsFieldSelected] = useState<number>(0);
 
     const boxRef = useRef<HTMLDivElement>(null);
+    const lastBtnRef = useRef<string | null>(null);
     const lastListRef = useRef<HTMLDivElement>(null);
     const fieldRef = useRef<HTMLDivElement>(null);
 
@@ -125,7 +126,16 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
         if (curPage !== 'netConfig') return;
 
         const activeButton = bttns.find(b => b.isOn);
-        if (!activeButton) return;
+        
+        // 1. Reset the edge-detector if no buttons are pressed
+        if (!activeButton) {
+            lastBtnRef.current = null;
+            return;
+        }
+
+        // 2. Ignore the press if the button is still being held down from the previous screen
+        if (lastBtnRef.current === activeButton.buttonTitle) return;
+        lastBtnRef.current = activeButton.buttonTitle;
 
         const MAX_FIELD_INDEX = 3;
 
@@ -146,31 +156,38 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             } else if (activeButton.buttonTitle === 'DOWN') {
                 nextIndex = Math.min(MAX_FIELD_INDEX, current + 1);
             } else if (activeButton.buttonTitle === 'ENTER') {
-                const pwd = fieldData.password.trim();
                 
-                if (pwd.length > 0 && pwd.length < 8) {
-                    console.error("WPA2 requires a password of at least 8 characters.");
-                    return current;
+                // 3. Only create the AP if the user is highlighting the SAVE button
+                if (current === MAX_FIELD_INDEX) {
+                    const pwd = fieldData.password.trim();
+                    
+                    if (pwd.length > 0 && pwd.length < 8) {
+                        console.error("WPA2 requires a password of at least 8 characters.");
+                        return current;
+                    }
+
+                    const finalPwd = pwd === '' ? undefined : pwd;
+                    
+                    (async () => {
+                        const apStarted = await startAp(fieldData.ssid, fieldData.channel, fieldData.band, finalPwd);
+                        
+                        if (!apStarted) {
+                            console.error("Failed to start AP (hostapd crashed or timed out)");
+                            return;
+                        }
+
+                        const dhcpStarted = await startDhcp(false);
+                        
+                        if (dhcpStarted) {
+                            goToPage('waiting');
+                        } else {
+                            console.error("Failed to start DHCP");
+                        }
+                    })();
+                } else {
+                    // If they are on a text input and press ENTER, move the cursor down
+                    nextIndex = Math.min(MAX_FIELD_INDEX, current + 1);
                 }
-
-                const finalPwd = pwd === '' ? undefined : pwd;
-                
-                (async () => {
-                    const apStarted = await startAp(fieldData.ssid, fieldData.channel, fieldData.band, finalPwd);
-                    
-                    if (!apStarted) {
-                        console.error("Failed to start AP (hostapd crashed or timed out)");
-                        return;
-                    }
-
-                    const dhcpStarted = await startDhcp(false);
-                    
-                    if (dhcpStarted) {
-                        goToPage('waiting');
-                    } else {
-                        console.error("Failed to start DHCP");
-                    }
-                })();
             }
 
             if (nextIndex !== current) {
@@ -184,7 +201,7 @@ const Screen = ({ bttns, swtch }: { bttns: Bttn[], swtch: Bttn[] }) => {
             return nextIndex;
         });
 
-    }, [bttns, curPage, fieldData]); 
+    }, [bttns, curPage, fieldData]);
 
     useEffect(() => {
         if (curPage !== 'netConfig') return;
